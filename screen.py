@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 
 import curses
 from datetime import datetime
@@ -11,7 +11,7 @@ class dbtopScreen:
 	stdscr 			= None
 	header_rows		= 6
 	headerpad 		= None
-	queryrows 		= 10
+	queryrows 		= 20
 	querypad 		= None
 	locksrows 		= 15
 	lockspad 		= None
@@ -38,6 +38,7 @@ class dbtopScreen:
 			curses.noecho()
 			curses.cbreak()
 			curses.curs_set(0)
+			self.stdscr.nodelay(1)
 			self.stdscr.keypad(1)			
 			(self.max_y,self.max_x) = self.stdscr.getmaxyx()
 			
@@ -74,8 +75,8 @@ class dbtopScreen:
 		curses.nocbreak()
 		self.stdscr.keypad(0)
 		curses.echo()
-		#if self.ErrorOcurred == 0 :
-		#	curses.endwin()
+		if self.ErrorOcurred == 0 :
+			curses.endwin()
 		
 	def getinput(self):
 		self.stdscr.getch()
@@ -112,24 +113,26 @@ class dbtopScreen:
 		querypad.clear()
 		querypad.border()
 		querypad.addstr(0,3,"Running queries")
-		querypad.addstr(1,1,"   Hostname     Username     Database     TimeRunning     Query")
+		querypad.addstr(1,1,"   Hostname |   Username  |  Database  |  TimeRunning  |    Query    ")
 		while (i < len(queries)) and (i < (self.queryrows-3)):	
 			#Show long runnigng queries in RED
-			if round(queries[i][4]) > 5:
+			if round(queries[i][3]) > 5:
 				bgcolor=curses.color_pair(2)| curses.A_BOLD
 			else:
 				bgcolor=curses.color_pair(1)	#DEFAULT COLOR
 				
-			posy=2+i
+			posy=2+i*2
 			querypad.addstr(posy,2,queries[i][1][:12],bgcolor) #hostname
 			querypad.addch (posy,13,chr(124),bgcolor) #print |
 			querypad.addstr(posy,15,queries[i][2][:12],bgcolor) #username
 			querypad.addch (posy,27,chr(124),bgcolor) #print |
 			querypad.addstr(posy,28,queries[i][0][:12],bgcolor) #database
 			querypad.addch (posy,40,chr(124),bgcolor) #print |
-			querypad.addstr(posy,44,str(round(queries[i][4]))[:12],bgcolor) #Time
+			querypad.addstr(posy,44,str(round(queries[i][3]))[:12],bgcolor) #Time
 			querypad.addch (posy,56,chr(124),bgcolor) #print |
-			querypad.addstr(posy,58,queries[i][5][:80],bgcolor) #Query
+			querypad.addstr(posy,58,queries[i][4][:self.max_x-59],bgcolor) #Query
+			querypad.addch (posy+1,56,chr(124),bgcolor) #print |
+			querypad.addstr(posy+1,58,queries[i][4][(self.max_x-59):(2*(self.max_x-59))],bgcolor) #Query2
 			i+=1
 			
 			
@@ -166,6 +169,8 @@ class dbtopScreen:
 			lockspad.addstr(posy,76,str(locks[i][7])[:10]) #LockTime
 			lockspad.addch (posy,86,chr(124)) #print |
 			
+			
+			
 			i+=1
 		
 		self.refreshRegion(lockspad)
@@ -178,25 +183,27 @@ class dbtopScreen:
 		sessionspad.addstr(0,3,"Current Sessions")
 		sessionspad.addstr(1,1,"  SID   |    Username    |   Hostname   |   Schema   |     Start Time      |")
 		
-		while (i < len(sessions)) and (i< (self.sessionsrows-3)):
-			posy=2+i
-			sessionspad.addstr(posy,2,str(sessions[i][0])[:6])	#SID
-			sessionspad.addch (posy,9	,chr(124)) #print |
-			
-			sessionspad.addstr(posy,12,str(sessions[i][1])[:12])	#username
-			sessionspad.addch (posy,26	,chr(124)) #print |
-			
-			sessionspad.addstr(posy,28,sessions[i][2][:12])	#hostname
-			sessionspad.addch (posy,41	,chr(124)) #print |
-			
-			sessionspad.addstr(posy,43,sessions[i][3][:10])	#schema name
-			sessionspad.addch (posy,54	,chr(124)) #print |
-			
-			sessionspad.addstr(posy,56,sessions[i][4].strftime('%Y-%m-%d %H:%M:%S'))	#start time
-			sessionspad.addch (posy,76	,chr(124)) #print |
-			
-			i+=1
-		
+		try:
+			while (i < len(sessions)) and (i< (self.sessionsrows-3)):
+				posy=2+i
+				sessionspad.addstr(posy,2,str(sessions[i][0])[:6])	#SID
+				sessionspad.addch (posy,9	,chr(124)) #print |
+				
+				sessionspad.addstr(posy,12,str(sessions[i][1])[:12])	#username
+				sessionspad.addch (posy,26	,chr(124)) #print |
+				
+				sessionspad.addstr(posy,28,sessions[i][2][:12])	#hostname
+				sessionspad.addch (posy,41	,chr(124)) #print |
+				
+				sessionspad.addstr(posy,43,sessions[i][3][:10])	#schema name
+				sessionspad.addch (posy,54	,chr(124)) #print |
+				
+				sessionspad.addstr(posy,56,sessions[i][4].strftime('%Y-%m-%d %H:%M:%S'))	#start time
+				sessionspad.addch (posy,76	,chr(124)) #print |
+				
+				i+=1
+		except:
+			None
 		self.refreshRegion(sessionspad)
 
 		

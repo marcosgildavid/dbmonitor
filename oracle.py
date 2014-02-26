@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 import cx_Oracle
 
 class OracleDatabase:
@@ -57,9 +57,7 @@ class OracleDatabase:
         	SELECT 
 				s.username username, 
 				s.machine client, 
-				s.schemaname db, 
-				q.SQL_ID,
-			   
+				s.schemaname db, 			   
 				s.last_call_et/60 mins_running, 
 				q.sql_text query
 			FROM v$session s 
@@ -80,8 +78,8 @@ class OracleDatabase:
 		if len(rows) > 0:
 			for row in rows:
 				#Join SQL TEXT			
-				myrow=list(row[:5])				
-				sqltext=row[5].strip().replace("\t","").replace("\n"," ")
+				myrow=list(row[:4])				
+				sqltext=row[4].strip().replace("\t","").replace("\n"," ")
 				myrow.append(sqltext)				
 				myQueries.append(tuple(myrow))
 				'''

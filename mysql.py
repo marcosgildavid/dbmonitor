@@ -23,9 +23,7 @@ class MySQLDatabase:
 		self.database=database
 		
 	def connect(self):
-		# connect via SQL*Net string or by each segment in a separate argument
-		#connection = cx_Oracle.connect("user/password@TNS")
-		#connection = cx_Oracle.connect("user", "password", "TNS")
+		
 		try:
 			self.connection=MySQLdb.connect(host=self.hostname, user=self.username, passwd=self.password, db=self.database) 
 			
