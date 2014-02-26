@@ -49,6 +49,7 @@ class OracleDatabase:
 	
 	def getCurrentQueries(self):
 		myQueries=[]
+		myrow=[]
 		previousID=""		
 		sqltext=""
 		cursor = self.connection.cursor()
@@ -58,27 +59,32 @@ class OracleDatabase:
 				s.machine client, 
 				s.schemaname db, 
 				q.SQL_ID,
-				q.PIECE, 
+			   
 				s.last_call_et/60 mins_running, 
 				q.sql_text query
-				FROM v$session s 
-			JOIN v$sqltext_with_newlines q
+			FROM v$session s 
+			JOIN v$sql q
 			ON s.sql_address = q.address
-			--WHERE 
-				--	status='ACTIVE' 
-				--AND
-					--type <>'BACKGROUND'
-				--AND 
-				--	last_call_et> 60
-				--AND 
-				--	s.SID<>(select sys_context('USERENV','SID') from dual)
-				ORDER BY last_call_et desc,q.sql_id,q.piece
+		  WHERE 
+			  status='ACTIVE' 
+			--AND
+			  --type <>'BACKGROUND'
+			--AND 
+			--  last_call_et> 60
+			--AND 
+			--  s.SID<>(select sys_context('USERENV','SID') from dual)
+			ORDER BY last_call_et desc,q.sql_id
 		""")
 		rows=cursor.fetchall()
 		
 		if len(rows) > 0:
 			for row in rows:
 				#Join SQL TEXT			
+				myrow=list(row[:5])				
+				sqltext=row[5].strip().replace("\t","").replace("\n"," ")
+				myrow.append(sqltext)				
+				myQueries.append(tuple(myrow))
+				'''
 				try:
 					if row[3] != previousID :	#different query
 						
@@ -106,8 +112,38 @@ class OracleDatabase:
 				sqltext="Error 2"
 					
 		#print (myQueries)
+		'''
 		return myQueries	
-			
+	
+
+	def getCurrentLocks(self):
+		rows=None
+		cursor = self.connection.cursor()
+		cursor.execute("""
+        	SELECT
+				object_name, 
+				object_type, 
+				session_id, 
+				type,     -- Type or system/user lock
+				lmode,      -- lock mode in which session holds lock
+				request, 
+				block, 
+				ctime     -- Time since current mode was granted
+			FROM
+				v$locked_object, all_objects, v$lock
+			WHERE
+					v$locked_object.object_id = all_objects.object_id 
+				AND
+					v$lock.id1 = all_objects.object_id 
+				AND
+					v$lock.sid = v$locked_object.session_id
+			order by
+				session_id, ctime desc, object_name
+		""")
+		rows=cursor.fetchall()
+		
+		return rows
+		
 			
 	def getCurrentConnectionData(self):
 		connData=""
@@ -124,9 +160,20 @@ class OracleDatabase:
 			
 		return connData
 	
+	def getCurrentSessions(self):
+		rows=None
+		cursor = self.connection.cursor()
+		cursor.execute("""
+        	SELECT s.sid,s.username,s.machine, s.schemaname, s.logon_time
+			FROM v$session s
+			WHERE 
+				 --type='USER' 
+			--AND
+				  status='ACTIVE'
+		""")
+		rows=cursor.fetchall()
 		
-	
-	
+		return rows
 	
 	
 	

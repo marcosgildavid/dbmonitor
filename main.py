@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-import cx_Oracle
 import sys,getopt
 import time
 from screen import *
@@ -38,12 +37,17 @@ def main(argv):
 		elif opt in ('-n','--tnsname'):
 			tnsname=arg
 	try:
+		
 		MainWindow=dbtopScreen(type)
 		
-		
-		dbObject=OracleDatabase(username,password,tnsname)
+		if type.lower() == "oracle":
+			dbObject=OracleDatabase(username,password,tnsname)
+			
+			
 		dbObject.connect()
+		
 		MainWindow.updateConnectionString(dbObject.getCurrentConnectionData())
+		
 		
 		
 		while 1:
@@ -51,11 +55,19 @@ def main(argv):
 			MainWindow.updateCurrentConnections(conns);
 			
 			queries=dbObject.getCurrentQueries()
-		
 			MainWindow.updateQueries(queries)
+			
+			locks=dbObject.getCurrentLocks()
+			MainWindow.updateLocks(locks)
+			
+			sessions=dbObject.getCurrentSessions()
+			
+			MainWindow.updateSessions(sessions)
 			#print(dbObject.getCurrentConnections())
 			#print (queries)
+			MainWindow.updateScreen()
 			time.sleep(1)
+			
 		
 		
 		
